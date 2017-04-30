@@ -17,6 +17,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CameraDemo extends Activity {
 	private static final String TAG = "FrontCamera";
@@ -24,8 +27,11 @@ public class CameraDemo extends Activity {
 	Preview preview;
 	Button buttonClick;
 	Button button2;
+    int count = 0;
 	int stillCount = 0;
 	boolean success = true;
+    //Image arr[] = new Image[10];
+    ArrayList<Image> img = new ArrayList<Image>();
 	File folder = new File(Environment.getExternalStorageDirectory() + "/EmergingData");
 
 	@Override
@@ -46,8 +52,6 @@ public class CameraDemo extends Activity {
 							jpegCallback);
 					buttonClick.setEnabled(false);
 
-				//Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
-				//startActivity(myIntent);
 			}
 		});
 
@@ -57,8 +61,10 @@ public class CameraDemo extends Activity {
 		button2.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
+                myIntent.putExtra("path",folder.getAbsolutePath());
 				startActivity(myIntent);
-				sendBroadcast(new android.content.Intent("com.example.adita.myapplication .STATUS_CHANGE"));
+                Log.d(TAG,"In listner");
+                sendBroadcast(new android.content.Intent("com.example.adita.myapplication .STATUS_CHANGE"));
 			}
 		});
 
@@ -90,8 +96,12 @@ public class CameraDemo extends Activity {
 			FileOutputStream outStream = null;
 			try {
 				outStream = new FileOutputStream(String.format(
-						folder.getAbsolutePath()+"/still%d.bmp",
-						System.currentTimeMillis()));
+						folder.getAbsolutePath()+"/still%d.bmp", count));
+						//System.currentTimeMillis()));
+                Image pic = new Image(data,count);
+                //arr[count] = img;
+                count++;
+                img.add(pic);
 				outStream.write(data);
 				outStream.close();
 				Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length);

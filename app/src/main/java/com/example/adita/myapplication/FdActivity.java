@@ -1,9 +1,13 @@
 package com.example.adita.myapplication;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -51,9 +55,10 @@ import android.widget.ToggleButton;
 
 public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
-	private static final String TAG = "OCVSample::Activity";
+	private static final String TAG = "FrontCamera";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 	public static final int JAVA_DETECTOR = 0;
+    ArrayList<Image> imagelist = new ArrayList<Image>();
 	
 	Core.MinMaxLocResult mmG;
 	Rect eye_only_rectangle;
@@ -228,13 +233,54 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 				/*mOpenCvCameraView.setCameraIndex(cameraid);
 				mOpenCvCameraView.enableFpsMeter();
 				mOpenCvCameraView.enableView();*/
+				System.out.println("before");
+                //imagelist = (ArrayList<Image>) getIntent().getSerializableExtra("ListofImages");
+               // Log.d(TAG,"Image found : "+imagelist.get(0));
 
-				Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.faces);//, BitmapFactoryOptionsbfo);
+				String path = getIntent().getStringExtra("path");
+
+				File f = new File(path,"still0.bmp");
+				Bitmap myBitmap = null;
+				try {
+					myBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+
+
+				//imagepic.setImageBitmap(bm2);
+				BitmapFactory.Options o = new BitmapFactory.Options();
+				o.inJustDecodeBounds = true;;
+				try {
+					Bitmap bm = BitmapFactory.decodeStream(new FileInputStream(f),null,o);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				final int Required = 225;
+				int scale =1;
+				while(o.outWidth/scale/2 >= Required && o.outHeight/scale/2 >= Required){
+					scale = scale *2;
+				}
+				Log.d(TAG,"Scale in GetImage method..!"+scale);
+				BitmapFactory.Options o2 = new BitmapFactory.Options();
+				o2.inSampleSize = scale;
+				try {
+					myBitmap = BitmapFactory.decodeStream(new FileInputStream(f),null,o2);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+
+
+				//Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.still0);//, BitmapFactoryOptionsbfo);
 				Mat image = detectOpenClosed(myBitmap);
 				Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
 				Utils.matToBitmap(image, myBitmap);
+
 				ImageView iv = (ImageView) findViewById(R.id.imageView);
+
+                //Bitmap bm = BitmapFactory.decodeByteArray((imagelist.get(0)).getImage(), 0, (imagelist.get(0)).getImage().length);
 				iv.setImageBitmap(myBitmap);
+                Log.d(TAG, "Reached here");
 			}
 				break;
 			default: {
@@ -266,7 +312,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			Log.d(TAG,"No OpenCV");
 		}
 		else {
-			Log.d(TAG,"OpenCV Loaded");
+			Log.d(TAG, "OpenCV Loaded");
 		}
 
 		//isBlurredImage(myBitmap);
@@ -280,35 +326,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 		//setContentView(new myView(this));
 	}
-/*
-	private class myView extends View{
-		Bitmap myBitmap;
-
-		public myView(Context context) {
-			super(context);
-			// TODO Auto-generated constructor stub
-			myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.faces);//, BitmapFactoryOptionsbfo);
-
-			Mat image = detectOpenClosed(myBitmap);
-
-			//Bitmap bm = Bitmap.createBitmap(image.cols(),image.rows(),Bitmap.Config.ARGB_8888);
-			Utils.matToBitmap(image, myBitmap);
-		}
-
-		@Override
-		protected void onDraw(Canvas canvas) {
-			// TODO Auto-generated method stub
-
-			canvas.drawBitmap(myBitmap, 0, 0, null);
-			/*if (canvas != null) {
-				canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
-				canvas.drawBitmap(myBitmap, new Rect(0, 0, myBitmap.getWidth(), myBitmap.getHeight()),
-						new Rect((canvas.getWidth() - myBitmap.getWidth()) / 2, (canvas.getHeight() - myBitmap.getHeight()) / 2,
-								(canvas.getWidth() - myBitmap.getWidth()) / 2 + myBitmap.getWidth(),
-								(canvas.getHeight() - myBitmap.getHeight()) / 2 + myBitmap.getHeight()), null);
-			}*/
-		//}
-	//}
 
 /*
 	@Override
@@ -324,23 +341,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		super.onResume();
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,mLoaderCallback);
 	}
-/*
-	public void onDestroy() {
-		super.onDestroy();
-		mOpenCvCameraView.disableView();
-	}
 
-	public void onCameraViewStarted(int width, int height) {
-		mGray = new Mat();
-		mRgba = new Mat();
-	}
-
-	public void onCameraViewStopped() {
-		mGray.release();
-		mRgba.release();
-		//System.exit(0);
-	}
-*/
 	public Mat detectOpenClosed(Bitmap inputFrame) {
 		if (drowsy){
 			timer_drowsy = Core.getTickCount();
@@ -361,8 +362,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Utils.bitmapToMat(inputFrame, mRgba);
 		Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
 
-		//mRgba = inputFrame. //rgba();
-		//mGray = inputFrame. //gray();
 		TotalFrames++;
 
 		boolean showing_drowsy = SetDrowsy();
@@ -472,6 +471,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			//match_eye
 			HaarEyeOpen_R = match_eye(templateR_open);
 			HaarEyeOpen_L = match_eye(templateL_open);
+			Log.d(TAG,"Before Open close");
 
 
 			if(!HaarEyeOpen_R && !HaarEyeOpen_L){
@@ -490,131 +490,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		}
 		return mRgba;
 	}
-/*
-	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		if (drowsy){
-			timer_drowsy = Core.getTickCount();
-			drowsy = false;
-		}
 
-		SetTimer();
-		mRgba = inputFrame.rgba();
-		mGray = inputFrame.gray();
-		TotalFrames++;
 
-		boolean showing_drowsy = SetDrowsy();
-		if (showing_drowsy || count_drowsy != 0){
-			count_drowsy++;
-			Imgproc.putText(mRgba, "ALERT!", new Point(mRgba.size().width/2, mRgba.size().height/2), Core.FONT_HERSHEY_SCRIPT_COMPLEX, 4, new Scalar(255,255,0),5);
-			if (count_drowsy>2){count_drowsy=0;}
-		}
-
-		if (mAbsoluteFaceSize == 0) {
-			int height = mGray.rows();
-			if (Math.round(height * mRelativeFaceSize) > 0) {
-				mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
-			}
-		}
-
-		MatOfRect faces = new MatOfRect();
-
-		if (mJavaDetector != null)
-			//detectMultiScale(const Mat& image, vector<Rect>& objects, double scaleFactor=1.1, int minNeighbors=3, int flags=0, Size minSize=Size(), Size maxSize=Size())
-			mJavaDetector.detectMultiScale(mGray, //Input image over perform classifier with
-					faces, //List of rectangles where are found whatever needs to classifier.
-					1.1, //Scalefactor. How much the image is reduced at each image scale
-					2,    //MinNeighbors. Specify how many neighbors each candidate rectangle should have to retain it.
-					2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
-					new Size(mAbsoluteFaceSize, mAbsoluteFaceSize),	//Minimum possible object size. Objects smaller than that are ignored.
-					new Size()
-			);  //Maximum possible object size. Objects larger than that are ignored.
-
-		Rect[] facesArray = faces.toArray();
-		for (int i = 0; i < facesArray.length; i++) {
-
-			//Draw a rectangle on mRgba, from point top-left of faces found to bottom right, color: FACE_RECT_COLOR, lineWidth: 3
-			Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(),FACE_RECT_COLOR, 3);
-
-			//Rectangle of the face
-			Rect RectOfFace = facesArray[i];
-			//Split two different regions for two eyes
-			///*
-			Rect eyearea_right = new Rect( RectOfFace.x + RectOfFace.width / 16 ,
-					(int) (RectOfFace.y + (RectOfFace.height / 4.5)) ,
-	                (RectOfFace.width - 2 * RectOfFace.width / 16) / 2,
-	                (int) (RectOfFace.height / 3.0)
-	                );
-
-	        Rect eyearea_left = new Rect( RectOfFace.x + RectOfFace.width / 16 + ( RectOfFace.width - 2 * RectOfFace.width / 16 ) / 2 ,
-	                 (int) (RectOfFace.y + (RectOfFace.height / 4.5)) ,
-	                 (RectOfFace.width - 2 * RectOfFace.width / 16) / 2 ,
-	                 (int) (RectOfFace.height / 3.0)
-	                 );
-
-            //*/
-            //If you want to watch sub-matrix on display uncomment next and uncomment before
-            /*
-		    mRgba = mRgba.submat(RectOfFace);
-			Imgproc.resize(mRgba, mRgba, mGray.size());
-			//Split two different regions for two eyes
-
-			Rect eyearea_right = new Rect( mRgba.cols() / 16 ,
-					(int) ((mRgba.rows() / 4.5)) ,
-	                (mRgba.cols() - 2 * mRgba.cols() / 16) / 2,
-	                (int) (mRgba.rows() / 3.0)
-	                );
-
-	        Rect eyearea_left = new Rect(  mRgba.cols() / 16 + (  mRgba.cols() - 2 *  mRgba.cols() / 16 ) / 2 ,
-	                 (int) ((mRgba.rows() / 4.5)) ,
-	                 ( mRgba.cols() - 2 *  mRgba.cols() / 16) / 2 ,
-	                 (int) (mRgba.rows() / 3.0)
-	                 );
-
-            Core.rectangle(mRgba, eyearea_left.tl(), eyearea_left.br(),
-                    new Scalar(255, 0, 0, 255), 2);
-            Core.rectangle(mRgba, eyearea_right.tl(), eyearea_right.br(),
-                    new Scalar(255, 0, 0, 255), 2);
-            */
-
-/*			FrameFace++;
-			//get_template function needs: classifier, area over perform classifier, and desired size of new template
-			Rect rectR = get_template(mJavaDetectorEyeRight, eyearea_right);
-
-			Rect rectL = get_template(mJavaDetectorEyeLeft, eyearea_left);
-			if (rectL.width==0 || rectL.height==0 || rectR.width==0 || rectR.height==0){continue;}
-
-			rectR = get_template(mJavaDetectorEyeOpen, rectR, new Size(1, 1), new Size(50,50));
-			templateR_open = mGray.submat(rectR);
-
-			rectL = get_template(mJavaDetectorEyeOpen, rectL, new Size(1, 1), new Size(50,50));
-			templateL_open = mGray.submat(rectL);
-
-			/*
-			if (rectL.width>0){
-			    mRgba = mRgba.submat(rectR);
-				Imgproc.resize(mRgba, mRgba, mGray.size());
-			}
-			*/
-
-			//match_eye
-/*			HaarEyeOpen_R = match_eye(templateR_open);
-			HaarEyeOpen_L = match_eye(templateL_open);
-
-			if(!HaarEyeOpen_R && !HaarEyeOpen_L){
-				Imgproc.putText(mRgba, "Closed", new Point(mRgba.size().width/18, mRgba.size().height/5), Core.FONT_HERSHEY_SCRIPT_COMPLEX, 4, new Scalar(0,255,0),5);
-				FrameEyesClosed++;
-				FrameClosedDrowsy++;
-			}
-			else if (HaarEyeOpen_R && HaarEyeOpen_L){
-				Imgproc.putText(mRgba, "Open", new Point(mRgba.size().width/18, mRgba.size().height/5), Core.FONT_HERSHEY_SCRIPT_COMPLEX, 4, new Scalar(0,255,0),5);
-				FrameEyesOpen++;
-			}
-
-			break;
-		}
-		return mRgba;
-	}
-	*/
  private Rect get_template(CascadeClassifier clasificator, Rect RectAreaInterest) {
 		Mat template = new Mat(); //Where is gonna be stored the eye detected data
 		Mat mROI = mGray.submat(RectAreaInterest); //Matrix which contain data of the whole eye area from geometry of face
@@ -730,13 +607,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		mRelativeFaceSize = faceSize;
 		mAbsoluteFaceSize = 0;
 	}
-	/*
-	public void onToggleClick(View v) {
-		cameraid = cameraid^1;
-		mOpenCvCameraView.disableView();
-	    mOpenCvCameraView.setCameraIndex(cameraid);
-	    mOpenCvCameraView.enableView();
-    }*/
+
 	
 	public void InitTimer(View v){
 		Toast.makeText(getApplicationContext(), "Timer enabled for "+AllTime+" seconds", Toast.LENGTH_SHORT).show();
