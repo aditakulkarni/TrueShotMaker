@@ -229,57 +229,76 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					e.printStackTrace();
 					Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
 				}
+
 				/*mOpenCvCameraView.setCameraIndex(cameraid);
 				mOpenCvCameraView.enableFpsMeter();
 				mOpenCvCameraView.enableView();*/
-				System.out.println("before");
-                //imagelist = (ArrayList<Image>) getIntent().getSerializableExtra("ListofImages");
-               // Log.d(TAG,"Image found : "+imagelist.get(0));
+
+				ArrayList<Image> al = new ArrayList<Image>();
 
 				String path = getIntent().getStringExtra("path");
+				File f[] = new File[10];
 
-				File f = new File(path,"still0.bmp");
-				Bitmap myBitmap = null;
-				try {
-					myBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
+				for(int i=0; i<10; i++) {
+					Image img = new Image();
+
+					f[i] = new File(path, "still" + i + ".bmp");
+					img.setName("still" + i + ".bmp");
+					Bitmap myBitmap = null;
+					try {
+						myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]));
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+
+					BitmapFactory.Options o = new BitmapFactory.Options();
+					o.inJustDecodeBounds = true;
+					;
+					try {
+						Bitmap bm = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o);
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+					final int Required = 225;
+					int scale = 1;
+					while (o.outWidth / scale / 2 >= Required && o.outHeight / scale / 2 >= Required) {
+						scale = scale * 2;
+					}
+					Log.d(TAG, "Scale in GetImage method..!" + scale);
+					BitmapFactory.Options o2 = new BitmapFactory.Options();
+					o2.inSampleSize = scale;
+					try {
+						myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o2);
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+
+					isBlurredImage(myBitmap,img);
+					Mat image = detectOpenClosed(myBitmap,img);
+					Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
+					Utils.matToBitmap(image, myBitmap);
+					img.setImgBitmap(myBitmap);
+					al.add(img);
+					Log.d(TAG,al.get(i).getName());
+					Log.d(TAG,"Count"+al.get(i).getCount());
 				}
-
-
-				//imagepic.setImageBitmap(bm2);
-				BitmapFactory.Options o = new BitmapFactory.Options();
-				o.inJustDecodeBounds = true;;
-				try {
-					Bitmap bm = BitmapFactory.decodeStream(new FileInputStream(f),null,o);
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-				final int Required = 225;
-				int scale =1;
-				while(o.outWidth/scale/2 >= Required && o.outHeight/scale/2 >= Required){
-					scale = scale *2;
-				}
-				Log.d(TAG,"Scale in GetImage method..!"+scale);
-				BitmapFactory.Options o2 = new BitmapFactory.Options();
-				o2.inSampleSize = scale;
-				try {
-					myBitmap = BitmapFactory.decodeStream(new FileInputStream(f),null,o2);
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-
-
-				//Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.still0);//, BitmapFactoryOptionsbfo);
-				Mat image = detectOpenClosed(myBitmap);
-				Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
-				Utils.matToBitmap(image, myBitmap);
 
 				ImageView iv = (ImageView) findViewById(R.id.imageView);
 
-                //Bitmap bm = BitmapFactory.decodeByteArray((imagelist.get(0)).getImage(), 0, (imagelist.get(0)).getImage().length);
+				int count = -9999;
+				Bitmap myBitmap = null;
+				String myname = null;
+				for(int i=0; i<al.size(); i++) {
+					if(al.get(i).getCount() > count) {
+						myBitmap = al.get(i).getImgBitmap();
+						count = al.get(i).count;
+						myname = al.get(i).getName();
+					}
+				}
 				iv.setImageBitmap(myBitmap);
-                Log.d(TAG, "Reached here");
+				Log.d(TAG,myname);
+				Log.d(TAG,"Count"+count);
+				Log.d(TAG, "Reached here");
 			}
 				break;
 			default: {
@@ -341,7 +360,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,mLoaderCallback);
 	}
 
-	public Mat detectOpenClosed(Bitmap inputFrame) {
+	public Mat detectOpenClosed(Bitmap inputFrame, Image img) {
 		if (drowsy){
 			timer_drowsy = Core.getTickCount();
 			drowsy = false;
@@ -399,6 +418,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Log.d(TAG,"Length "+facesArray.length);
 
 		for (int i = 0; i < facesArray.length; i++) {
+			img.incrementCount();
 			Log.d(TAG,"Calling 3.....");
 
 			//Draw a rectangle on mRgba, from point top-left of faces found to bottom right, color: FACE_RECT_COLOR, lineWidth: 3
@@ -472,15 +492,16 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			HaarEyeOpen_L = match_eye(templateL_open);
 			Log.d(TAG,"Before Open close");
 
-
 			if(!HaarEyeOpen_R && !HaarEyeOpen_L){
 				Log.d(TAG,"Closed");
+				img.decrementCount();
 				Imgproc.putText(mRgba, "Closed", new Point(mRgba.size().width/18, mRgba.size().height/5), Core.FONT_HERSHEY_SCRIPT_COMPLEX, 4, new Scalar(0,255,0),5);
 				FrameEyesClosed++;
 				FrameClosedDrowsy++;
 			}
 			else if (HaarEyeOpen_R && HaarEyeOpen_L){
 				Log.d(TAG,"Open");
+				img.incrementCount();
 				Imgproc.putText(mRgba, "Open", new Point(mRgba.size().width/18, mRgba.size().height/5), Core.FONT_HERSHEY_SCRIPT_COMPLEX, 4, new Scalar(0,255,0),5);
 				FrameEyesOpen++;
 			}
@@ -656,7 +677,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		return flag_drowsy;
 	}
 
-	private boolean isBlurredImage(Bitmap image) {
+	private boolean isBlurredImage(Bitmap image, Image img) {
 		BitmapFactory.Options opt = new BitmapFactory.Options();
 		opt.inDither = true;
 		opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -701,9 +722,11 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		int soglia = -12507499 ;//-6118750;
 		if (maxLap < soglia || maxLap == soglia) {
 			Log.i(TAG, maxLap + "--------->blur image<------------");
+			img.decrementCount();
 			return true;
 		} else {
 			Log.i(TAG, "----------->Not blur image<------------");
+			img.incrementCount();
 			return false;
 		}
 	}
