@@ -13,7 +13,8 @@
             android:id="@+id/button2"
             android:layout_width="40dp"
             android:layout_height="30dp"
-android:layout_marginLeft="150dp"
+            android:layout_marginLeft="150dp"
+            android:onClick="OpenFDActivity"
             android:text="Button" />
 
         <Button
