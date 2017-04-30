@@ -31,7 +31,6 @@ public class CameraDemo extends Activity {
 	int stillCount = 0;
 	boolean success = true;
     //Image arr[] = new Image[10];
-    ArrayList<Image> img = new ArrayList<Image>();
 	File folder = new File(Environment.getExternalStorageDirectory() + "/EmergingData");
 
 	@Override
@@ -98,10 +97,7 @@ public class CameraDemo extends Activity {
 				outStream = new FileOutputStream(String.format(
 						folder.getAbsolutePath()+"/still%d.bmp", count));
 						//System.currentTimeMillis()));
-                Image pic = new Image(data,count);
-                //arr[count] = img;
                 count++;
-                img.add(pic);
 				outStream.write(data);
 				outStream.close();
 				Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length);

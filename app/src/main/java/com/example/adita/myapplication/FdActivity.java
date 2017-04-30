@@ -58,8 +58,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	private static final String TAG = "FrontCamera";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 	public static final int JAVA_DETECTOR = 0;
-    ArrayList<Image> imagelist = new ArrayList<Image>();
-	
+
 	Core.MinMaxLocResult mmG;
 	Rect eye_only_rectangle;
 	Point iris;
