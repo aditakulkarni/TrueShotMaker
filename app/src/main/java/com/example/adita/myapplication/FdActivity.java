@@ -444,31 +444,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					(int) (RectOfFace.height / 3.0)
 			);
 
-			//*/
-			//If you want to watch sub-matrix on display uncomment next and uncomment before
-            /*
-		    mRgba = mRgba.submat(RectOfFace);
-			Imgproc.resize(mRgba, mRgba, mGray.size());
-			//Split two different regions for two eyes
-
-			Rect eyearea_right = new Rect( mRgba.cols() / 16 ,
-					(int) ((mRgba.rows() / 4.5)) ,
-	                (mRgba.cols() - 2 * mRgba.cols() / 16) / 2,
-	                (int) (mRgba.rows() / 3.0)
-	                );
-
-	        Rect eyearea_left = new Rect(  mRgba.cols() / 16 + (  mRgba.cols() - 2 *  mRgba.cols() / 16 ) / 2 ,
-	                 (int) ((mRgba.rows() / 4.5)) ,
-	                 ( mRgba.cols() - 2 *  mRgba.cols() / 16) / 2 ,
-	                 (int) (mRgba.rows() / 3.0)
-	                 );
-
-            Core.rectangle(mRgba, eyearea_left.tl(), eyearea_left.br(),
-                    new Scalar(255, 0, 0, 255), 2);
-            Core.rectangle(mRgba, eyearea_right.tl(), eyearea_right.br(),
-                    new Scalar(255, 0, 0, 255), 2);
-            */
-
 			FrameFace++;
 			//get_template function needs: classifier, area over perform classifier, and desired size of new template
 			Rect rectR = get_template(mJavaDetectorEyeRight, eyearea_right);
