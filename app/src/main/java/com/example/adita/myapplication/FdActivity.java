@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.support.v8.renderscript.*;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
@@ -41,6 +42,7 @@ import android.media.FaceDetector;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.renderscript.Long2;
+import android.renderscript.RenderScript;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -678,18 +680,22 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	}
 
 	private boolean isBlurredImage(Bitmap image, Image img) {
+		RenderScript renderScript = RenderScript.create(getApplicationContext());
+        GrayScaling grayScaling = new GrayScaling(renderScript);
 		BitmapFactory.Options opt = new BitmapFactory.Options();
 		opt.inDither = true;
 		opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
 		int l = CvType.CV_8UC1;
-		Mat matImage = new Mat();
-		Utils.bitmapToMat(image, matImage);
+		//Mat matImage = new Mat();
+		//Utils.bitmapToMat(image, matImage);
+		//Mat matImageGrey = new Mat();
+		//Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
+		Bitmap image1 = grayScaling.process(image);
 		Mat matImageGrey = new Mat();
-		Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
-
+		Utils.bitmapToMat(image1, matImageGrey);
 		Mat dst2 = new Mat();
-		Utils.bitmapToMat(image, dst2);
+		Utils.bitmapToMat(image1, dst2);
 
 		Mat laplacianImage = new Mat();
 		dst2.convertTo(laplacianImage, l);

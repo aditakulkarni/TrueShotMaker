@@ -3,31 +3,77 @@
 	android:orientation="vertical" android:layout_width="fill_parent"
 	android:layout_height="fill_parent" android:id="@+id/layout">
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="TrueShot"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+
     <FrameLayout
         android:id="@+id/preview"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="1">
-
-        <Button
-            android:id="@+id/button2"
-            android:layout_width="40dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="150dp"
-            android:onClick="OpenFDActivity"
-            android:text="Button" />
+        android:layout_height="476dp"
+        android:layout_weight="1.44">
 
         <Button
             android:id="@+id/buttonClick"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Click"></Button>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Click here"
+            android:textColor="@android:color/holo_red_dark"/>
     </FrameLayout>
 
-    <TextView android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:text="Front Verify"
-		android:textSize="24sp" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp">
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:onClick="OpenFDActivity"
+            android:text="View Image"
+            android:layout_marginRight="10dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+        <RadioButton
+            android:id="@+id/radioButton2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:text="1" />
+
+        <RadioButton
+            android:id="@+id/radioButton3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@+id/radioButton2"
+            android:text="5" />
+
+        <RadioButton
+            android:id="@+id/radioButton4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="200dp"
+            android:layout_marginEnd="17dp"
+            android:layout_alignParentBottom="true" />
+
+
+    </RelativeLayout>
 
 
 </LinearLayout>
