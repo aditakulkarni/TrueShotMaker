@@ -7,11 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.List;
 
-import android.support.v8.renderscript.*;
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -24,8 +21,6 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
 
@@ -33,27 +28,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PointF;
 import android.media.AudioManager;
-import android.media.FaceDetector;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.renderscript.Long2;
-import android.renderscript.RenderScript;
+import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
@@ -655,7 +640,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	}
 
 	private boolean isBlurredImage(Bitmap image, Image img) {
-		RenderScript renderScript = RenderScript.create(getApplicationContext());
+		RenderScript renderScript = RenderScript.create(this);
         GrayScaling grayScaling = new GrayScaling(renderScript);
 		BitmapFactory.Options opt = new BitmapFactory.Options();
 		opt.inDither = true;

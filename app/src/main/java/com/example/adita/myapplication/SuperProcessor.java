@@ -5,8 +5,10 @@ package com.example.adita.myapplication;
  */
 import android.graphics.Bitmap;
 import android.renderscript.RSRuntimeException;
-import android.renderscript.RenderScript;
-    public abstract class SuperProcessor {
+import android.support.v8.renderscript.RenderScript;
+
+
+public abstract class SuperProcessor {
         protected RenderScript mRenderScript;
 
         public abstract Bitmap process(Bitmap input) throws RSRuntimeException;

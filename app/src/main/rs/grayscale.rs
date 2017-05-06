@@ -1,5 +1,6 @@
 #pragma version(1)
-#pragma rs java_package_name(com.cllin.imageprocessing.processing.processor)
+#pragma rs java_package_name(com.example.adita.myapplication)
+//com.cllin.imageprocessing.processing.processor
 
 #define MSG_TAG "GrayScaleFromRenderScript"
 
