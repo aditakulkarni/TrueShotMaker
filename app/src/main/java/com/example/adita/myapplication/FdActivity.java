@@ -246,12 +246,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					BitmapFactory.Options o = new BitmapFactory.Options();
 					o.inJustDecodeBounds = true;
 
-					/*try {
-						Bitmap bm = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o);
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					}*/
-
 					final int Required = 225;
 					int scale = 1;
 					while (o.outWidth / scale / 2 >= Required && o.outHeight / scale / 2 >= Required) {
