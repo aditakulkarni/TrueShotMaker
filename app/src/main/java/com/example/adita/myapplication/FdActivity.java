@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -109,7 +111,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
 		@Override
-		public void onManagerConnected(int status) {
+		public void onManagerConnected(int status) throws FileNotFoundException {
 			switch (status) {
 			case LoaderCallbackInterface.SUCCESS: {
 				Log.i(TAG, "OpenCV loaded successfully");
@@ -226,26 +228,30 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 				String path = getIntent().getStringExtra("path");
 				File f[] = new File[10];
 
+				ExecutorService threadPool = Executors.newFixedThreadPool(2);
+
 				for(int i=0; i<10; i++) {
-					Image img = new Image();
+					final Image img = new Image();
 					f[i] = new File(path, "still" + i + ".bmp");
 					img.setName("still" + i + ".bmp");
-					Bitmap myBitmap = null;
+					Bitmap myBitmap1 = null;
 					try {
-						myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]));
+						myBitmap1 = BitmapFactory.decodeStream(new FileInputStream(f[i]));
 					} catch (FileNotFoundException e) {
 						e.printStackTrace();
 					}
 					//setting new image bitmap in class object
-                    img.setImgBitmap(myBitmap);
+                    img.setImgBitmap(myBitmap1);
+
 					BitmapFactory.Options o = new BitmapFactory.Options();
 					o.inJustDecodeBounds = true;
-					;
-					try {
+
+					/*try {
 						Bitmap bm = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o);
 					} catch (FileNotFoundException e) {
 						e.printStackTrace();
-					}
+					}*/
+
 					final int Required = 225;
 					int scale = 1;
 					while (o.outWidth / scale / 2 >= Required && o.outHeight / scale / 2 >= Required) {
@@ -254,21 +260,22 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					Log.d(TAG, "Scale in GetImage method..!" + scale);
 					BitmapFactory.Options o2 = new BitmapFactory.Options();
 					o2.inSampleSize = scale;
-					try {
-						myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o2);
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					}
 
-					isBlurredImage(myBitmap,img);
-					Mat image = detectOpenClosed(myBitmap,img);
+					final Bitmap myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o2);
+
+					threadPool.submit(new Runnable() { public void run() {isBlurredImage(myBitmap,img);}});
+					threadPool.submit(new Runnable() { public void run() {detectOpenClosed(myBitmap,img);}});
+
+					/*Mat image = detectOpenClosed(myBitmap,img);
 					Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
-					Utils.matToBitmap(image, myBitmap);
+					Utils.matToBitmap(image, myBitmap);*/
+
 					al.add(img);
 					Log.d(TAG,al.get(i).getName());
 					Log.d(TAG,"Count"+al.get(i).getCount());
 				}
 
+				threadPool.shutdown();
 				ImageView iv = (ImageView) findViewById(R.id.imageView);
 
 				int count = -9999;
@@ -346,7 +353,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,mLoaderCallback);
 	}
 
-	public Mat detectOpenClosed(Bitmap inputFrame, Image img) {
+	public void detectOpenClosed(Bitmap inputFrame, Image img) {
 		if (drowsy){
 			timer_drowsy = Core.getTickCount();
 			drowsy = false;
@@ -469,7 +476,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 			break;
 		}
-		return mRgba;
+		//return mRgba;
 	}
 
 
