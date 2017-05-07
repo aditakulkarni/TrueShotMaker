@@ -115,6 +115,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			switch (status) {
 			case LoaderCallbackInterface.SUCCESS: {
 				Log.i(TAG, "OpenCV loaded successfully");
+
 				try {
 					// load cascade file from application resources
 					//Face detection classifier
