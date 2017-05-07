@@ -228,7 +228,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 				for(int i=0; i<10; i++) {
 					Image img = new Image();
-
 					f[i] = new File(path, "still" + i + ".bmp");
 					img.setName("still" + i + ".bmp");
 					Bitmap myBitmap = null;
@@ -237,7 +236,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					} catch (FileNotFoundException e) {
 						e.printStackTrace();
 					}
-
+					//setting new image bitmap in class object
+                    img.setImgBitmap(myBitmap);
 					BitmapFactory.Options o = new BitmapFactory.Options();
 					o.inJustDecodeBounds = true;
 					;
@@ -264,7 +264,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 					Mat image = detectOpenClosed(myBitmap,img);
 					Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
 					Utils.matToBitmap(image, myBitmap);
-					img.setImgBitmap(myBitmap);
 					al.add(img);
 					Log.d(TAG,al.get(i).getName());
 					Log.d(TAG,"Count"+al.get(i).getCount());
