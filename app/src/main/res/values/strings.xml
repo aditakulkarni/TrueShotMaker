@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">EyeDetector</string>
+    <string name="app_name">TrueShot</string>
     <string name="Processing_prompt">Choose a ProcessingImage</string>
  
     <string-array name="Preocessing_arrays">
