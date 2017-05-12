@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.RadioButton;
 import android.widget.Toast;
 
 import java.io.File;
@@ -40,6 +41,9 @@ public class CameraDemo extends Activity {
 	int stillCount = 0;
 	boolean success = true;
     //Image arr[] = new Image[10];
+	int numberOfCaptures = 10;
+	RadioButton button1, button5, button10;
+
 	File folder = new File(Environment.getExternalStorageDirectory() + "/EmergingData");
 
     private static final int REQUEST_PERMISSIONS = 20;
@@ -49,8 +53,11 @@ public class CameraDemo extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
+		button10 = (RadioButton) findViewById(R.id.radioButton3);
 
-        if (ContextCompat.checkSelfPermission(CameraDemo.this,
+		button10.setChecked(true);
+
+		if (ContextCompat.checkSelfPermission(CameraDemo.this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) + ContextCompat
                 .checkSelfPermission(CameraDemo.this,
                         Manifest.permission.CAMERA)
@@ -131,6 +138,49 @@ public class CameraDemo extends Activity {
     public void createImagesFolderAndStartCamera(){
 		preview = new Preview(this);
 		((FrameLayout) findViewById(R.id.preview)).addView(preview);
+
+		button1 = (RadioButton) findViewById(R.id.radioButton);
+		button5 = (RadioButton) findViewById(R.id.radioButton2);
+
+		button1.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				numberOfCaptures = 1;
+				if(button5.isChecked()) {
+					button5.setChecked(false);
+				}
+				if(button10.isChecked()) {
+					button10.setChecked(false);
+				}
+			}
+		});
+
+		button5.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				numberOfCaptures = 5;
+				if(button1.isChecked()) {
+					button1.setChecked(false);
+				}
+				if(button10.isChecked()) {
+					button10.setChecked(false);
+				}
+			}
+		});
+
+		button10.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				numberOfCaptures = 10;
+				if(button1.isChecked()) {
+					button1.setChecked(false);
+				}
+				if(button5.isChecked()) {
+					button5.setChecked(false);
+				}
+			}
+		});
+
 		if (!folder.exists()) {
 			success = folder.mkdir();
 		}
@@ -148,10 +198,13 @@ public class CameraDemo extends Activity {
 
 
 		public  void OpenFDActivity(View view){
-		Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
-		myIntent.putExtra("path",folder.getAbsolutePath());
-		startActivity(myIntent);
-	}
+			Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
+			Bundle bundle = new Bundle();
+			bundle.putInt("numberOfCaptures",numberOfCaptures);
+			bundle.putString("path",folder.getAbsolutePath());
+			myIntent.putExtras(bundle);
+			startActivity(myIntent);
+		}
 
 
 	@Override
@@ -195,7 +248,7 @@ public class CameraDemo extends Activity {
 			try {
 				stillCount++;
 				camera.startPreview();
-				if (stillCount < 10) {
+				if (stillCount < numberOfCaptures) {
 					preview.camera.takePicture(shutterCallback, rawCallback,
 							jpegCallback);
 				} else {

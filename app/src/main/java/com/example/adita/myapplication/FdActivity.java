@@ -113,6 +113,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	BaseLoaderCallback mLoaderCallback;
 	Bitmap myBitmap = null;
 	ImageView iv;
+	String path;
+	Image img;
 
 	public FdActivity() {
 		mDetectorName = new String[2];
@@ -158,15 +160,14 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		//setContentView(new myView(this));
 	}
 
-	/*
-        @Override
-        public void onPause() {
-            super.onPause();
-            if (mOpenCvCameraView != null)
-                mOpenCvCameraView.disableView();
-            System.exit(0);
-        }
-    */
+	@Override
+	public void onPause() {
+		super.onPause();
+		File f = new File(path);
+		deleteRecursive(f);
+		System.exit(0);
+	}
+
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -653,13 +654,15 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 					ArrayList<Image> al = new ArrayList<Image>();
 
-					String path = getIntent().getStringExtra("path");
-					File f[] = new File[10];
+					Bundle bundle = getIntent().getExtras();
+					int numberOfCaptures = bundle.getInt("numberOfCaptures") ;
+					path = bundle.getString("path");
+					File f[] = new File[numberOfCaptures];
 
 					ExecutorService threadPool = Executors.newFixedThreadPool(2);
 
-					for(int i=0; i<10; i++) {
-						final Image img = new Image();
+					for(int i=0; i<numberOfCaptures; i++) {
+						img = new Image();
 						f[i] = new File(path, "still" + i + ".bmp");
 						img.setName("still" + i + ".bmp");
 						Bitmap myBitmap1 = null;
@@ -738,5 +741,12 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			pb.setVisibility(View.GONE);
 		}
 
+	}
+
+	void deleteRecursive(File fileOrDirectory) {
+		if (fileOrDirectory.isDirectory())
+			for (File child : fileOrDirectory.listFiles())
+				deleteRecursive(child);
+		fileOrDirectory.delete();
 	}
 }
