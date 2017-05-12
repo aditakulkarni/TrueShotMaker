@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -35,12 +36,14 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -112,9 +115,11 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	ProgressBar pb;
 	BaseLoaderCallback mLoaderCallback;
 	Bitmap myBitmap = null;
-	ImageView iv;
-	String path;
-	Image img;
+    Bitmap face = null;
+	ImageView displayimage;
+    Button save;
+    File folder = new File(Environment.getExternalStorageDirectory() + "/FinalImage");
+    Boolean success;
 
 	public FdActivity() {
 		mDetectorName = new String[2];
@@ -128,9 +133,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Log.i(TAG, "called onCreate");
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		//OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
-
-		//setContentView(R.layout.face_detect_surface_view);
 		setContentView(R.layout.activity_main);
 
 		if(!OpenCVLoader.initDebug()) {
@@ -148,23 +150,15 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			};
 		}
 
-		//isBlurredImage(myBitmap);
-
-		//mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.fd_activity_surface_view);
-		//mOpenCvCameraView.setCvCameraViewListener(this);
-
 		beep = MediaPlayer.create(this, R.raw.button1);
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-		//setContentView(new myView(this));
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		File f = new File(path);
-		deleteRecursive(f);
+		//File f = new File(path);
+		//deleteRecursive(f);
 		System.exit(0);
 	}
 
@@ -261,12 +255,13 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			Rect rectR = get_template(mJavaDetectorEyeRight, eyearea_right);
 
 			Rect rectL = get_template(mJavaDetectorEyeLeft, eyearea_left);
-			if (rectL.width==0 || rectL.height==0 || rectR.width==0 || rectR.height==0){continue;}
+			if (rectL.width==0 || rectL.height==0 || rectR.width==0 || rectR.height==0){
+                Log.d(TAG,"INSIDE GET");continue;}
 
-			rectR = get_template(mJavaDetectorEyeOpen, rectR, new Size(1, 1), new Size(50,50));
+			rectR = get_template(mJavaDetectorEyeOpen, rectR, new Size(1, 1), new Size(220,220));
 			templateR_open = mGray.submat(rectR);
 
-			rectL = get_template(mJavaDetectorEyeOpen, rectL, new Size(1, 1), new Size(50,50));
+			rectL = get_template(mJavaDetectorEyeOpen, rectL, new Size(1, 1), new Size(220,220));
 			templateL_open = mGray.submat(rectL);
 
 			/*
@@ -297,6 +292,12 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 			break;
 		}
+        Log.d(TAG,"END OF FACE");
+        Bitmap bmp = Bitmap.createBitmap(mRgba.cols(),
+                mRgba.rows(), Bitmap.Config.ARGB_8888);
+        Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
+        Utils.matToBitmap(mRgba, bmp);
+        img.setFaceimage(bmp);
 		//return mRgba;
 	}
 
@@ -314,11 +315,11 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 				2,    //MinNeighbors. Specify how many neighbors each candidate rectangle should have to retain it.
 				Objdetect.CASCADE_FIND_BIGGEST_OBJECT | Objdetect.CASCADE_SCALE_IMAGE, //0 or 1.
 				new Size(10, 10), //Minimum possible object size. Objects smaller than that are ignored.
-				new Size(100,100)        //Maximum possible object size. Objects larger than that are ignored.
+				new Size(220,220)        //Maximum possible object size. Objects larger than that are ignored.
 		);
 
 		Rect[] eyesArray = eyes.toArray();
-		for (int i = 0; i < eyesArray.length;) {
+		for (int i = 0; i < eyesArray.length;i++) {
 			Rect eyeDetected = eyesArray[i];
 			eyeDetected.x = RectAreaInterest.x + eyeDetected.x;
 			eyeDetected.y = RectAreaInterest.y + eyeDetected.y;
@@ -349,12 +350,12 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 				1.01, //Scalefactor. How much the image is reduced at each image scale
 				2,    //MinNeighbors. Specify how many neighbors each candidate rectangle should have to retain it.
 				Objdetect.CASCADE_FIND_BIGGEST_OBJECT | Objdetect.CASCADE_SCALE_IMAGE, //0 or 1.
-				min_size, //Minimum possible object size. Objects smaller than that are ignored.
-				max_size        //Maximum possible object size. Objects larger than that are ignored.
+                new Size(10,10), //Minimum possible object size. Objects smaller than that are ignored.
+                new Size(220,220)        //Maximum possible object size. Objects larger than that are ignored.
 		);
 
 		Rect[] eyesArray = eyes.toArray();
-		for (int i = 0; i < eyesArray.length;) {
+		for (int i = 0; i < eyesArray.length;i++) {
 			Rect eyeDetected = eyesArray[i];
 			eyeDetected.x = RectAreaInterest.x + eyeDetected.x;
 			eyeDetected.y = RectAreaInterest.y + eyeDetected.y;
@@ -524,229 +525,246 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		}
 	}
 
-	private class AsyncCaller extends AsyncTask<Integer, Void, Void>
-	{
-		ProgressDialog pdLoading = new ProgressDialog(FdActivity.this);
+	private class AsyncCaller extends AsyncTask<Integer, Void, Void> {
+        ProgressDialog pdLoading = new ProgressDialog(FdActivity.this);
+        ImageView displayimage;
 
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			pb = (ProgressBar) findViewById(R.id.pbLoading);
-			pb.setVisibility(View.VISIBLE);
-		}
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pb = (ProgressBar) findViewById(R.id.pbLoading);
+            pb.setVisibility(View.VISIBLE);
+        }
 
-		@Override
-		protected Void doInBackground(Integer... params) {
-			int status = params[0].intValue();
-			//this method will be running on background thread so don't update UI frome here
-			//do your long running http tasks here,you dont want to pass argument and u can access the parent class' variable url over here
-			switch (status) {
-				case LoaderCallbackInterface.SUCCESS: {
-					Log.i(TAG, "OpenCV loaded successfully");
+        @Override
+        protected Void doInBackground(Integer... params) {
+            int status = params[0].intValue();
+            //this method will be running on background thread so don't update UI frome here
+            //do your long running http tasks here,you dont want to pass argument and u can access the parent class' variable url over here
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS: {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                    for(int i=0;i<10;i++) {
+                        Log.d(TAG,Singleton.getInstance().getArrayList().get(i).getName());
+                    }
+                    try {
+                        // load cascade file from application resources
+                        //Face detection classifier
+                        InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
+                        File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+                        mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
+                        FileOutputStream os = new FileOutputStream(mCascadeFile);
 
-					try {
-						// load cascade file from application resources
-						//Face detection classifier
-						InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
-						File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-						mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
-						FileOutputStream os = new FileOutputStream(mCascadeFile);
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            os.write(buffer, 0, bytesRead);
+                        }
+                        is.close();
+                        os.close();
 
-						byte[] buffer = new byte[4096];
-						int bytesRead;
-						while ((bytesRead = is.read(buffer)) != -1) {
-							os.write(buffer, 0, bytesRead);
-						}
-						is.close();
-						os.close();
+                        // ------------------ load right eye classificator -----------------------
+                        InputStream iser = getResources().openRawResource(R.raw.haarcascade_righteye_2splits);
+                        File cascadeDirER = getDir("cascadeER", Context.MODE_PRIVATE);
+                        cascadeFileER = new File(cascadeDirER, "haarcascade_eye_right.xml");
+                        FileOutputStream oser = new FileOutputStream(cascadeFileER);
 
-						// ------------------ load right eye classificator -----------------------
-						InputStream iser = getResources().openRawResource(R.raw.haarcascade_righteye_2splits);
-						File cascadeDirER = getDir("cascadeER",Context.MODE_PRIVATE);
-						cascadeFileER = new File(cascadeDirER,"haarcascade_eye_right.xml");
-						FileOutputStream oser = new FileOutputStream(cascadeFileER);
+                        byte[] bufferER = new byte[4096];
+                        int bytesReadER;
+                        while ((bytesReadER = iser.read(bufferER)) != -1) {
+                            oser.write(bufferER, 0, bytesReadER);
+                        }
+                        iser.close();
+                        oser.close();
 
-						byte[] bufferER = new byte[4096];
-						int bytesReadER;
-						while ((bytesReadER = iser.read(bufferER)) != -1) {
-							oser.write(bufferER, 0, bytesReadER);
-						}
-						iser.close();
-						oser.close();
+                        // ------------------ load left eye classificator -----------------------
+                        InputStream isel = getResources().openRawResource(R.raw.haarcascade_lefteye_2splits);
+                        File cascadeDirEL = getDir("cascadeEL", Context.MODE_PRIVATE);
+                        cascadeFileEL = new File(cascadeDirEL, "haarcascade_eye_left.xml");
+                        FileOutputStream osel = new FileOutputStream(cascadeFileEL);
 
-						// ------------------ load left eye classificator -----------------------
-						InputStream isel = getResources().openRawResource(R.raw.haarcascade_lefteye_2splits);
-						File cascadeDirEL = getDir("cascadeEL",Context.MODE_PRIVATE);
-						cascadeFileEL = new File(cascadeDirEL,"haarcascade_eye_left.xml");
-						FileOutputStream osel = new FileOutputStream(cascadeFileEL);
+                        byte[] bufferEL = new byte[4096];
+                        int bytesReadEL;
+                        while ((bytesReadEL = isel.read(bufferEL)) != -1) {
+                            osel.write(bufferEL, 0, bytesReadEL);
+                        }
+                        isel.close();
+                        osel.close();
 
-						byte[] bufferEL = new byte[4096];
-						int bytesReadEL;
-						while ((bytesReadEL = isel.read(bufferEL)) != -1) {
-							osel.write(bufferEL, 0, bytesReadEL);
-						}
-						isel.close();
-						osel.close();
+                        // ------------------ load open eye classificator -----------------------
+                        InputStream opisel = getResources().openRawResource(R.raw.haarcascade_eye_tree_eyeglasses);
+                        File cascadeDirEyeOpen = getDir("cascadeEyeOpen", Context.MODE_PRIVATE);
+                        cascadeFileEyeOpen = new File(cascadeDirEyeOpen, "haarcascade_eye_tree_eyeglasses.xml");
+                        FileOutputStream oposel = new FileOutputStream(cascadeFileEyeOpen);
 
-						// ------------------ load open eye classificator -----------------------
-						InputStream opisel = getResources().openRawResource(R.raw.haarcascade_eye_tree_eyeglasses);
-						File cascadeDirEyeOpen = getDir("cascadeEyeOpen",Context.MODE_PRIVATE);
-						cascadeFileEyeOpen = new File(cascadeDirEyeOpen,"haarcascade_eye_tree_eyeglasses.xml");
-						FileOutputStream oposel = new FileOutputStream(cascadeFileEyeOpen);
+                        byte[] bufferEyeOpen = new byte[4096];
+                        int bytesReadEyeOpen;
+                        while ((bytesReadEyeOpen = opisel.read(bufferEyeOpen)) != -1) {
+                            oposel.write(bufferEyeOpen, 0, bytesReadEyeOpen);
+                        }
+                        opisel.close();
+                        oposel.close();
 
-						byte[] bufferEyeOpen = new byte[4096];
-						int bytesReadEyeOpen;
-						while ((bytesReadEyeOpen = opisel.read(bufferEyeOpen)) != -1) {
-							oposel.write(bufferEyeOpen, 0, bytesReadEyeOpen);
-						}
-						opisel.close();
-						oposel.close();
+                        //Face Classifier
+                        mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+                        mJavaDetector.load(mCascadeFile.getAbsolutePath());
+                        if (mJavaDetector.empty()) {
+                            Log.e(TAG, "Failed to load cascade classifier of face");
+                            mJavaDetector = null;
+                        } else
+                            Log.i(TAG, "Loaded cascade classifier from " + mCascadeFile.getAbsolutePath());
+                        //cascadeDir.delete();
 
-						//Face Classifier
-						mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-						mJavaDetector.load( mCascadeFile.getAbsolutePath() );
-						if (mJavaDetector.empty()) {
-							Log.e(TAG, "Failed to load cascade classifier of face");
-							mJavaDetector = null;
-						} else
-							Log.i(TAG, "Loaded cascade classifier from "+ mCascadeFile.getAbsolutePath());
-						//cascadeDir.delete();
+                        //EyeRightClassifier
+                        mJavaDetectorEyeRight = new CascadeClassifier(cascadeFileER.getAbsolutePath());
+                        mJavaDetectorEyeRight.load(cascadeFileER.getAbsolutePath());
+                        if (mJavaDetectorEyeRight.empty()) {
+                            Log.e(TAG, "Failed to load cascade classifier of eye right");
+                            mJavaDetectorEyeRight = null;
+                        } else
+                            Log.i(TAG, "Loaded cascade classifier from " + cascadeFileER.getAbsolutePath());
+                        //cascadeDirER.delete();
 
-						//EyeRightClassifier
-						mJavaDetectorEyeRight = new CascadeClassifier(cascadeFileER.getAbsolutePath());
-						mJavaDetectorEyeRight.load( cascadeFileER.getAbsolutePath() );
-						if (mJavaDetectorEyeRight.empty()) {
-							Log.e(TAG, "Failed to load cascade classifier of eye right");
-							mJavaDetectorEyeRight = null;
-						} else
-							Log.i(TAG, "Loaded cascade classifier from "+ cascadeFileER.getAbsolutePath());
-						//cascadeDirER.delete();
+                        //EyeLeftClassifier
+                        mJavaDetectorEyeLeft = new CascadeClassifier(cascadeFileEL.getAbsolutePath());
+                        mJavaDetectorEyeLeft.load(cascadeFileEL.getAbsolutePath());
+                        if (mJavaDetectorEyeLeft.empty()) {
+                            Log.e(TAG, "Failed to load cascade classifier of eye left");
+                            mJavaDetectorEyeLeft = null;
+                        } else
+                            Log.i(TAG, "Loaded cascade classifier from " + cascadeFileEL.getAbsolutePath());
+                        //cascadeDirEL.delete();
 
-						//EyeLeftClassifier
-						mJavaDetectorEyeLeft = new CascadeClassifier(cascadeFileEL.getAbsolutePath());
-						mJavaDetectorEyeLeft.load( cascadeFileEL.getAbsolutePath() );
-						if (mJavaDetectorEyeLeft.empty()) {
-							Log.e(TAG, "Failed to load cascade classifier of eye left");
-							mJavaDetectorEyeLeft = null;
-						} else
-							Log.i(TAG, "Loaded cascade classifier from "+ cascadeFileEL.getAbsolutePath());
-						//cascadeDirEL.delete();
+                        //EyeOpenClassifier
+                        mJavaDetectorEyeOpen = new CascadeClassifier(cascadeFileEyeOpen.getAbsolutePath());
+                        mJavaDetectorEyeOpen.load(cascadeFileEyeOpen.getAbsolutePath());
 
-						//EyeOpenClassifier
-						mJavaDetectorEyeOpen = new CascadeClassifier(cascadeFileEyeOpen.getAbsolutePath());
-						mJavaDetectorEyeOpen.load( cascadeFileEyeOpen.getAbsolutePath() );
+                        if (mJavaDetectorEyeOpen.empty()) {
+                            Log.e(TAG, "Failed to load cascade classifier of eye open");
+                            mJavaDetectorEyeOpen = null;
+                        } else
+                            Log.i(TAG, "Loaded cascade classifier from " + cascadeFileEyeOpen.getAbsolutePath());
+                        //cascadeDirEyeOpen.delete();
 
-						if (mJavaDetectorEyeOpen.empty()) {
-							Log.e(TAG, "Failed to load cascade classifier of eye open");
-							mJavaDetectorEyeOpen = null;
-						} else
-							Log.i(TAG, "Loaded cascade classifier from "+ cascadeFileEyeOpen.getAbsolutePath());
-						//cascadeDirEyeOpen.delete();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+                    }
 
-					} catch (IOException e) {
-						e.printStackTrace();
-						Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
-					}
 
-				/*mOpenCvCameraView.setCameraIndex(cameraid);
-				mOpenCvCameraView.enableFpsMeter();
-				mOpenCvCameraView.enableView();*/
+                    ArrayList<Image> al = new ArrayList<Image>();
 
-					ArrayList<Image> al = new ArrayList<Image>();
+                    Bundle bundle = getIntent().getExtras();
+                    int numberOfCaptures = bundle.getInt("numberOfCaptures");
 
-					Bundle bundle = getIntent().getExtras();
-					int numberOfCaptures = bundle.getInt("numberOfCaptures") ;
-					path = bundle.getString("path");
-					File f[] = new File[numberOfCaptures];
+                   // ExecutorService threadPool = Executors.newFixedThreadPool(2);
+                    for (int i = 0; i < numberOfCaptures; i++) {
+                        Image img = new Image();
+                        Log.d(TAG,"no:"+img.getCount());
+                        img = Singleton.getInstance().getArrayList().get(i);
+                        Log.d(TAG, img.getName());
+                        myBitmap = getResizedBitmap(Singleton.getInstance().getArrayList().get(i).getImgBitmap(), 225);
+                      /*  threadPool.submit(new Runnable() {
+                            public void run() {
+                                isBlurredImage(myBitmap, img);
+                            }
+                        });
+                        threadPool.submit(new Runnable() {
+                            public void run() {
+                                detectOpenClosed(myBitmap, img);
+                            }
+                        });
+*/
+                        isBlurredImage(myBitmap, img);
+                        detectOpenClosed(myBitmap, img);
+                        al.add(img);
+                        Log.d(TAG, al.get(i).getName());
+                        Log.d(TAG, "Count" + al.get(i).getCount());
+                    }
 
-					ExecutorService threadPool = Executors.newFixedThreadPool(2);
+                   /* threadPool.shutdown();
+                    try {
+                        threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }*/
 
-					for(int i=0; i<numberOfCaptures; i++) {
-						img = new Image();
-						f[i] = new File(path, "still" + i + ".bmp");
-						img.setName("still" + i + ".bmp");
-						Bitmap myBitmap1 = null;
-						try {
-							myBitmap1 = BitmapFactory.decodeStream(new FileInputStream(f[i]));
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-						//setting new image bitmap in class object
-						img.setImgBitmap(myBitmap1);
+                    displayimage = (ImageView) findViewById(R.id.imageView);
+                    int count = -9999;
+                    String myname = null;
+                    for (int i = 0; i < al.size(); i++) {
+                        if (al.get(i).getCount() > count) {
+                            myBitmap = al.get(i).getImgBitmap();
+                            count = al.get(i).count;
+                            Log.d(TAG, "Inside Count :" + count);
+                            myname = al.get(i).getName();
+                            face = al.get(i).getFaceimage();
 
-						BitmapFactory.Options o = new BitmapFactory.Options();
-						o.inJustDecodeBounds = true;
+                        }
+                    }
+                    Log.d(TAG, myname);
+                    Log.d(TAG, "Count :" + count);
+                    Log.d(TAG, "Reached here");
+                }
+                break;
+                default: {
+                    //super.onManagerConnected(status);
+                }
+                break;
+            }
+            return null;
+        }
 
-						final int Required = 225;
-						int scale = 1;
-						while (o.outWidth / scale / 2 >= Required && o.outHeight / scale / 2 >= Required) {
-							scale = scale * 2;
-						}
-						Log.d(TAG, "Scale in GetImage method..!" + scale);
-						BitmapFactory.Options o2 = new BitmapFactory.Options();
-						o2.inSampleSize = scale;
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            //final Bitmap finalimage = myBitmap;
+            //final Bitmap finalface = face;
+            displayimage = (ImageView) findViewById(R.id.imageView);
+            displayimage.setImageBitmap(face);
+            pb.setVisibility(View.GONE);
+            //TODO
+            /*save.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    if (!folder.exists()) {
+                        success = folder.mkdir();
+                    }
+                    FileOutputStream out = null;
 
-						//final Bitmap myBitmap;
-						try{
-							myBitmap = BitmapFactory.decodeStream(new FileInputStream(f[i]), null, o2);
-						}catch (Exception e){
-							Log.d(TAG, "Exception ----");
-						}
+                    try {
+                        out = new FileOutputStream(String.format(folder.getAbsolutePath() + "/final" + System.currentTimeMillis() + ".bmp"));
+                        finalimage.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        out = new FileOutputStream(String.format(folder.getAbsolutePath() + "/final" + System.currentTimeMillis() + ".bmp"));
+                        finalface.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-						threadPool.submit(new Runnable() { public void run() {isBlurredImage(myBitmap,img);}});
-						threadPool.submit(new Runnable() { public void run() {detectOpenClosed(myBitmap,img);}});
+            });*/
 
-					/*Mat image = detectOpenClosed(myBitmap,img);
-					Imgproc.cvtColor(image, image, Imgproc.COLOR_RGBA2BGR);
-					Utils.matToBitmap(image, myBitmap);*/
-
-						al.add(img);
-						Log.d(TAG,al.get(i).getName());
-						Log.d(TAG,"Count"+al.get(i).getCount());
-					}
-
-					threadPool.shutdown();
-					ImageView iv = (ImageView) findViewById(R.id.imageView);
-
-					int count = -9999;
-					//Bitmap myBitmap = null;
-					String myname = null;
-					for(int i=0; i<al.size(); i++) {
-						if(al.get(i).getCount() > count) {
-							myBitmap = al.get(i).getImgBitmap();
-							count = al.get(i).count;
-							myname = al.get(i).getName();
-						}
-					}
-					Log.d(TAG,myname);
-					Log.d(TAG,"Count"+count);
-					Log.d(TAG, "Reached here");
-				}
-				break;
-				default: {
-					//super.onManagerConnected(status);
-				}
-				break;
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			super.onPostExecute(result);
-			iv = (ImageView) findViewById(R.id.imageView);
-
-			//this method will be running on UI thread
-			iv.setImageBitmap(myBitmap);
-			pb.setVisibility(View.GONE);
-		}
-
-	}
+        }
+    }
 
 	void deleteRecursive(File fileOrDirectory) {
 		if (fileOrDirectory.isDirectory())
 			for (File child : fileOrDirectory.listFiles())
 				deleteRecursive(child);
 		fileOrDirectory.delete();
+	}
+
+	public Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+		int width = image.getWidth();
+		int height = image.getHeight();
+
+		float bitmapRatio = (float)width / (float) height;
+		if (bitmapRatio > 1) {
+			width = maxSize;
+			height = (int) (width / bitmapRatio);
+		} else {
+			height = maxSize;
+			width = (int) (height * bitmapRatio);
+		}
+		return Bitmap.createScaledBitmap(image, width, height, true);
 	}
 }

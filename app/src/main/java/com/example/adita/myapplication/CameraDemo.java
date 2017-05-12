@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
@@ -27,9 +29,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CameraDemo extends Activity {
 	private static final String TAG = "FrontCamera";
@@ -67,9 +66,6 @@ public class CameraDemo extends Activity {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE) || ActivityCompat.shouldShowRequestPermissionRationale(CameraDemo.this,
                     Manifest.permission.CAMERA)) {
 
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
                 Snackbar.make(findViewById(android.R.id.content),
                         "Please Grant Permissions",
                         Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
@@ -84,16 +80,12 @@ public class CameraDemo extends Activity {
                             }
                         }).show();
             } else {
-                // No explanation needed, we can request the permission.
 
                 ActivityCompat.requestPermissions(CameraDemo.this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission
                                 .CAMERA},
                         REQUEST_PERMISSIONS);
 
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
         }else{
             Log.d(TAG, "Inside Else part --> Permission already granted");
@@ -192,6 +184,7 @@ public class CameraDemo extends Activity {
 						jpegCallback);
 				buttonClick.setEnabled(false);
 
+
 			}
 		});
 	}
@@ -201,7 +194,7 @@ public class CameraDemo extends Activity {
 			Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
 			Bundle bundle = new Bundle();
 			bundle.putInt("numberOfCaptures",numberOfCaptures);
-			bundle.putString("path",folder.getAbsolutePath());
+			//bundle.putString("path",folder.getAbsolutePath());
 			myIntent.putExtras(bundle);
 			startActivity(myIntent);
 		}
@@ -230,11 +223,18 @@ public class CameraDemo extends Activity {
 	PictureCallback jpegCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
+			Bitmap img = null;
 			try {
 				outStream = new FileOutputStream(String.format(
 						folder.getAbsolutePath()+"/still%d.bmp", count));
-						//System.currentTimeMillis()));
-                count++;
+
+				Image tempimg = new Image();
+				img = BitmapFactory.decodeByteArray(data,0,data.length);
+				tempimg.setImgBitmap(img);
+				tempimg.setName("still" + count + ".bmp");
+				Singleton.getInstance().getArrayList().add(tempimg);
+				Log.d(TAG,"tis  "+ Singleton.getInstance().getArrayList().get(count).getName());
+				count++;
 				outStream.write(data);
 				outStream.close();
 				Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length);
@@ -245,6 +245,9 @@ public class CameraDemo extends Activity {
 			} finally {
 			}
 			Log.d(TAG, "onPictureTaken - jpeg");
+			Log.d(TAG,Singleton.getInstance().getArrayList().get(stillCount).getName());
+			Log.d(TAG,"Length = :"+Singleton.getInstance().getArrayList().size());
+
 			try {
 				stillCount++;
 				camera.startPreview();

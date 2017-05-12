@@ -12,6 +12,15 @@ public class Image {
     int count=0;
     Bitmap imgBitmap;
     String name;
+    Bitmap faceimage;
+
+    public Bitmap getFaceimage() {
+        return faceimage;
+    }
+
+    public void setFaceimage(Bitmap faceimage) {
+        this.faceimage = faceimage;
+    }
 
     public String getName() {
         return name;
