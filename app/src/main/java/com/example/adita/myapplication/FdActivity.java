@@ -468,8 +468,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 	private boolean isBlurredImage(Bitmap image, Image img) {
 
-		//RenderScript renderScript = RenderScript.create(this);
-		//GrayScaling grayScaling = new GrayScaling(renderScript);
+		RenderScript renderScript = RenderScript.create(this);
+		GrayScaling grayScaling = new GrayScaling(renderScript);
 		BitmapFactory.Options opt = new BitmapFactory.Options();
 		opt.inDither = true;
 		opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -480,10 +480,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Mat matImageGrey = new Mat();
 		Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
 
-		//Bitmap image1 = grayScaling.process(image);
-		//Mat matImageGrey = new Mat();
-		//Utils.bitmapToMat(image1, matImageGrey);
-		//Utils.matToBitmap(matImageGrey,image1);
+		Bitmap image1 = grayScaling.process(image);
 
 		Mat dst2 = new Mat();
 		Utils.bitmapToMat(image, dst2);
@@ -493,7 +490,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Imgproc.Laplacian(matImageGrey, laplacianImage, CvType.CV_8U);
 		Mat laplacianImage8bit = new Mat();
 		laplacianImage.convertTo(laplacianImage8bit, CvType.CV_8U);
-		//System.gc();
 
 
 		Bitmap bmp = Bitmap.createBitmap(laplacianImage8bit.cols(),
@@ -530,6 +526,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			img.incrementCount();
 			return false;
 		}
+
 	}
 
 	private class AsyncCaller extends AsyncTask<Integer, Void, Void> {
@@ -546,8 +543,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
         @Override
         protected Void doInBackground(Integer... params) {
             int status = params[0].intValue();
-            //this method will be running on background thread so don't update UI frome here
-            //do your long running http tasks here,you dont want to pass argument and u can access the parent class' variable url over here
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
@@ -555,7 +550,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         Log.d(TAG,Singleton.getInstance().getArrayList().get(i).getName());
                     }
                     try {
-                        // load cascade file from application resources
                         //Face detection classifier
                         InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
                         File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
@@ -620,7 +614,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                             mJavaDetector = null;
                         } else
                             Log.i(TAG, "Loaded cascade classifier from " + mCascadeFile.getAbsolutePath());
-                        //cascadeDir.delete();
 
                         //EyeRightClassifier
                         mJavaDetectorEyeRight = new CascadeClassifier(cascadeFileER.getAbsolutePath());
@@ -630,7 +623,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                             mJavaDetectorEyeRight = null;
                         } else
                             Log.i(TAG, "Loaded cascade classifier from " + cascadeFileER.getAbsolutePath());
-                        //cascadeDirER.delete();
 
                         //EyeLeftClassifier
                         mJavaDetectorEyeLeft = new CascadeClassifier(cascadeFileEL.getAbsolutePath());
@@ -651,7 +643,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                             mJavaDetectorEyeOpen = null;
                         } else
                             Log.i(TAG, "Loaded cascade classifier from " + cascadeFileEyeOpen.getAbsolutePath());
-                        //cascadeDirEyeOpen.delete();
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -701,7 +692,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         if (al.get(i).getCount() > count) {
                             myBitmap = al.get(i).getImgBitmap();
                             count = al.get(i).count;
-                            Log.d(TAG, "Inside Count :" + count);
                             myname = al.get(i).getName();
                             face = al.get(i).getFaceimage();
 
@@ -723,13 +713,13 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            //final Bitmap finalimage = myBitmap;
-            //final Bitmap finalface = face;
+            final Bitmap finalimage = myBitmap;
+            final Bitmap finalface = face;
             displayimage = (ImageView) findViewById(R.id.imageView);
-            displayimage.setImageBitmap(face);
+            displayimage.setImageBitmap(finalimage);
             pb.setVisibility(View.GONE);
-            //TODO
-            /*save.setOnClickListener(new View.OnClickListener() {
+            save = (Button) findViewById(R.id.save);
+            save.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if (!folder.exists()) {
                         success = folder.mkdir();
@@ -745,7 +735,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         e.printStackTrace();
                     }
                 }
-            });*/
+            });
 
         }
     }

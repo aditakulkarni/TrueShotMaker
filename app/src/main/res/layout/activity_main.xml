@@ -15,7 +15,15 @@
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="550dp"
         android:layout_centerHorizontal="true" />
+
+    <Button
+        android:id="@+id/save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageView"
+        android:text="Save image"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout >
