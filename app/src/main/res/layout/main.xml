@@ -40,7 +40,7 @@
             android:layout_marginLeft="10dp"
             android:text="5"
             android:layout_alignParentTop="true"
-            android:layout_toStartOf="@+id/radioButton3" />
+            android:layout_toEndOf="@+id/radioButton" />
 
         <RadioButton
             android:id="@+id/radioButton3"

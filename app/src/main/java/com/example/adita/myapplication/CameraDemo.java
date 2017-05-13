@@ -39,10 +39,10 @@ public class CameraDemo extends Activity {
     int count = 0;
 	int stillCount = 0;
 	boolean success = true;
-    //Image arr[] = new Image[10];
 	int numberOfCaptures = 10;
 	RadioButton button1, button5, button10;
 
+	//location on external storage
 	File folder = new File(Environment.getExternalStorageDirectory() + "/EmergingData");
 
     private static final int REQUEST_PERMISSIONS = 20;
@@ -94,6 +94,7 @@ public class CameraDemo extends Activity {
 	}
 
     @Override
+	//runtime permissions required for APIs above 6.0
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[],
                                            @NonNull int[] grantResults) {
@@ -101,9 +102,7 @@ public class CameraDemo extends Activity {
         switch (requestCode) {
             case REQUEST_PERMISSIONS: {
                 if ((grantResults.length > 0) && (grantResults[0]+grantResults[1]) == PackageManager.PERMISSION_GRANTED) {
-                    //Call whatever you want
                     Toast.makeText(this, "Write Storage permission granted", Toast.LENGTH_SHORT).show();
-                    // myMethod();
                     createImagesFolderAndStartCamera();
                 } else {
                     Snackbar.make(findViewById(android.R.id.content), "Enable Permissions from settings",
@@ -130,21 +129,6 @@ public class CameraDemo extends Activity {
     public void createImagesFolderAndStartCamera(){
 		preview = new Preview(this);
 		((FrameLayout) findViewById(R.id.preview)).addView(preview);
-
-		/*Button changeCamera = (Button) findViewById(R.id.button3);
-
-		changeCamera.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				preview.camera.stopPreview();
-				//preview.camera.release();
-				*//*camera.stopPreview();
-				camera.release();*//*
-				preview = new Preview(getApplicationContext(),0);
-				((FrameLayout) findViewById(R.id.preview)).addView(preview);
-				//preview.camera.startPreview();
-			}
-		});*/
 
 		button1 = (RadioButton) findViewById(R.id.radioButton);
 		button5 = (RadioButton) findViewById(R.id.radioButton2);
@@ -193,6 +177,7 @@ public class CameraDemo extends Activity {
 		}
 		buttonClick = (Button) findViewById(R.id.buttonClick);
 
+		//listner to capture photo
 		buttonClick.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				preview.camera.takePicture(shutterCallback, rawCallback,
@@ -201,12 +186,12 @@ public class CameraDemo extends Activity {
 			}
 		});
 	}
-
+		//intent to call FDAtivity
 		public  void OpenFDActivity(View view){
 			Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
 			Bundle bundle = new Bundle();
+			//pass the number of photos taken through bundle
 			bundle.putInt("numberOfCaptures",numberOfCaptures);
-			//bundle.putString("path",folder.getAbsolutePath());
 			myIntent.putExtras(bundle);
 			startActivity(myIntent);
 		}
@@ -225,12 +210,14 @@ public class CameraDemo extends Activity {
 		}
 	};
 
+	//starts the preview to take photo
 	PictureCallback rawCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			Log.d(TAG, "onPictureTaken - raw with data = " + ((data != null) ? data.length : " NULL"));
 		}
 	};
 
+	//callback method for burst mode
 	PictureCallback jpegCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
@@ -260,6 +247,7 @@ public class CameraDemo extends Activity {
 			Log.d(TAG,"Length = :"+Singleton.getInstance().getArrayList().size());
 
 			try {
+				//loop continues till it matches the required number of photos required
 				stillCount++;
 				camera.startPreview();
 				if (stillCount < numberOfCaptures) {

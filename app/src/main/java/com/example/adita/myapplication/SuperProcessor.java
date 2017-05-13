@@ -9,6 +9,7 @@ import android.support.v8.renderscript.RenderScript;
 
 
 public abstract class SuperProcessor {
+    //Super class for renderscript. provides initialisation for renderscript
         protected RenderScript mRenderScript;
 
         public abstract Bitmap process(Bitmap input) throws RSRuntimeException;
@@ -16,9 +17,5 @@ public abstract class SuperProcessor {
         public SuperProcessor(RenderScript renderscript) {
             this.mRenderScript = renderscript;
         }
-
-        public RenderScript getScript() {
-            return mRenderScript;
-        }
-    }
+ }
 

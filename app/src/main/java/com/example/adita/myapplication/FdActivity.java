@@ -1,15 +1,23 @@
 package com.example.adita.myapplication;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -27,46 +35,29 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
 
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Environment;
-import android.support.v8.renderscript.RenderScript;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.Toast;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-public class FdActivity extends Activity {//implements CvCameraViewListener2 {
+public class FdActivity extends Activity {
 
 	private static final String TAG = "FrontCamera";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 	public static final int JAVA_DETECTOR = 0;
 
 	Core.MinMaxLocResult mmG;
-	Rect eye_only_rectangle;
 	Point iris;
 	Rect eye_template;
 
-	private int cameraid = 1;
-	private Mat templateR;
-	private Mat templateL;
 	private Mat templateR_open;
 	private Mat templateL_open;
 
-	private boolean HaarLE = false;
-	private boolean HaarRE = false;
 	private boolean HaarEyeOpen_R = false;
 	private boolean HaarEyeOpen_L = false;
 
@@ -95,8 +86,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	private float mRelativeFaceSize = 0.2f;
 	private int mAbsoluteFaceSize = 0;
 
-	//private CameraBridgeViewBase mOpenCvCameraView;
-
 	int AllTime = 30;
 	int drowsyTime = 1;
 	double frequency;
@@ -116,7 +105,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	BaseLoaderCallback mLoaderCallback;
 	Bitmap myBitmap = null;
     Bitmap face = null;
-	ImageView displayimage;
     Button save;
     File folder = new File(Environment.getExternalStorageDirectory() + "/FinalImage");
     Boolean success;
@@ -127,14 +115,13 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Log.i(TAG, "Instantiated new " + this.getClass());
 	}
 
-	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.i(TAG, "called onCreate");
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.activity_main);
-
+	//check for opencv loader
 		if(!OpenCVLoader.initDebug()) {
 			Log.d(TAG,"No OpenCV");
 		}
@@ -156,8 +143,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	@Override
 	public void onPause() {
 		super.onPause();
-		//File f = new File(path);
-		//deleteRecursive(f);
 		System.exit(0);
 	}
 
@@ -188,7 +173,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_BGR2RGBA);
 
 		TotalFrames++;
-
+		//check for drwosy eyes. If detected, 'ALERT' is displayed
 		boolean showing_drowsy = SetDrowsy();
 		if (showing_drowsy || count_drowsy != 0){
 			count_drowsy++;
@@ -207,9 +192,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 		MatOfRect faces = new MatOfRect();
 
-
+		//constructor for java detector. this sets the parameters for window to be considered for detectin face
 		if (mJavaDetector != null) {
-			//detectMultiScale(const Mat& image, vector<Rect>& objects, double scaleFactor=1.1, int minNeighbors=3, int flags=0, Size minSize=Size(), Size maxSize=Size())
 			mJavaDetector.detectMultiScale(mGray, //Input image over perform classifier with
 					faces, //List of rectangles where are found whatever needs to classifier.
 					1.1, //Scalefactor. How much the image is reduced at each image scale
@@ -224,6 +208,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		Rect[] facesArray = faces.toArray();
 		Log.d(TAG,"Length "+facesArray.length);
 
+		//looop for no.of faces detected
 		for (int i = 0; i < facesArray.length; i++) {
 			img.incrementCount();
 			Log.d(TAG,"Calling 3.....");
@@ -236,7 +221,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			//Rectangle of the face
 			Rect RectOfFace = facesArray[i];
 			//Split two different regions for two eyes
-			///*
+
 			Rect eyearea_right = new Rect( RectOfFace.x + RectOfFace.width / 16 ,
 					(int) (RectOfFace.y + (RectOfFace.height / 4.5)) ,
 					(RectOfFace.width - 2 * RectOfFace.width / 16) / 2,
@@ -263,18 +248,13 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			rectL = get_template(mJavaDetectorEyeOpen, rectL, new Size(1, 1), new Size(220,220));
 			templateL_open = mGray.submat(rectL);
 
-			/*
-			if (rectL.width>0){
-			    mRgba = mRgba.submat(rectR);
-				Imgproc.resize(mRgba, mRgba, mGray.size());
-			}
-			*/
-
 			//match_eye
 			HaarEyeOpen_R = match_eye(templateR_open);
 			HaarEyeOpen_L = match_eye(templateL_open);
 			Log.d(TAG,"Before Open close");
 
+			//OPEN OR CLOSE IS DISPLAYED ONLY ONCE PER IMAGE
+			//if no eye detected in both classifiers, then 'closed'
 			if(!HaarEyeOpen_R && !HaarEyeOpen_L){
 				Log.d(TAG,"Closed");
 				img.decrementCount();
@@ -282,6 +262,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 				FrameEyesClosed++;
 				FrameClosedDrowsy++;
 			}
+			//if any one detected eye is open
 			else if (HaarEyeOpen_R && HaarEyeOpen_L){
 				Log.d(TAG,"Open");
 				img.incrementCount();
@@ -292,22 +273,21 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			break;
 		}
         Log.d(TAG,"END OF FACE");
+		//converting Mat tp bitmap : includes detected face and eye
         Bitmap bmp = Bitmap.createBitmap(mRgba.cols(),
                 mRgba.rows(), Bitmap.Config.ARGB_8888);
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2BGR);
         Utils.matToBitmap(mRgba, bmp);
         img.setFaceimage(bmp);
-		//return mRgba;
 	}
 
 
+	//constructor for setting eye detection parameters
 	private Rect get_template(CascadeClassifier clasificator, Rect RectAreaInterest) {
-		Mat template = new Mat(); //Where is gonna be stored the eye detected data
 		Mat mROI = mGray.submat(RectAreaInterest); //Matrix which contain data of the whole eye area from geometry of face
 		MatOfRect eyes = new MatOfRect();
 		iris = new Point();
 		eye_template = new Rect();
-		//detectMultiScale(const Mat& image, vector<Rect>& objects, double scaleFactor=1.1, int minNeighbors=3, int flags=0, Size minSize=Size(), Size maxSize=Size())
 		clasificator.detectMultiScale(mROI, //Image which set classification. Needs to be of the type CV_8U
 				eyes, //List of rectangles where are stored possibles eyes detected
 				1.1, //Scalefactor. How much the image is reduced at each image scale
@@ -330,20 +310,16 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			iris.y = mmG.minLoc.y + eyeDetected.y;
 			eye_template = new Rect((int) iris.x -  eyeDetected.width/2, (int) iris.y -  eyeDetected.height/2,  eyeDetected.width,  eyeDetected.height);
 
-			//Imgproc.equalizeHist(template, template);
 			break;
-			//return template;
 		}
 		return eye_template;
 	}
 
 	private Rect get_template(CascadeClassifier clasificator, Rect RectAreaInterest, Size min_size, Size max_size) {
-		Mat template = new Mat(); //Where is gonna be stored the eye detected data
 		Mat mROI = mGray.submat(RectAreaInterest); //Matrix which contain data of the whole eye area from geometry of face
 		MatOfRect eyes = new MatOfRect();
 		iris = new Point();
 		eye_template = new Rect();
-		//detectMultiScale(const Mat& image, vector<Rect>& objects, double scaleFactor=1.1, int minNeighbors=3, int flags=0, Size minSize=Size(), Size maxSize=Size())
 		clasificator.detectMultiScale(mROI, //Image which set classification. Needs to be of the type CV_8U
 				eyes, //List of rectangles where are stored possibles eyes detected
 				1.01, //Scalefactor. How much the image is reduced at each image scale
@@ -366,10 +342,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 			iris.y = mmG.minLoc.y + eyeDetected.y;
 			eye_template = new Rect((int) iris.x -  eyeDetected.width/2, (int) iris.y -  eyeDetected.height/2,  eyeDetected.width,  eyeDetected.height);
 
-			//Imgproc.equalizeHist(template, template);
 			break;
-
-			//return template;
 		}
 		return eye_template;
 	}
@@ -385,18 +358,18 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		Log.i(TAG, "called onCreateOptionsMenu");
+		/*Log.i(TAG, "called onCreateOptionsMenu");
 		mItemFace50 = menu.add("Face size 50%");
 		mItemFace40 = menu.add("Face size 40%");
 		mItemFace30 = menu.add("Face size 30%");
 		mItemFace20 = menu.add("Face size 20%");
-		mItemType = menu.add(mDetectorName[mDetectorType]);
+		mItemType = menu.add(mDetectorName[mDetectorType]);*/
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		Log.i(TAG, "called onOptionsItemSelected; selected item: " + item);
+		/*Log.i(TAG, "called onOptionsItemSelected; selected item: " + item);
 		if (item == mItemFace50)
 			setMinFaceSize(0.5f);
 		else if (item == mItemFace40)
@@ -408,20 +381,16 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		else if (item == mItemType) {
 			int tmpDetectorType = (mDetectorType + 1) % mDetectorName.length;
 			item.setTitle(mDetectorName[tmpDetectorType]);
-		}
+		}*/
 		return true;
 	}
 
-	private void setMinFaceSize(float faceSize) {
-		mRelativeFaceSize = faceSize;
-		mAbsoluteFaceSize = 0;
-	}
 
 
 	public void InitTimer(View v){
 		Toast.makeText(getApplicationContext(), "Timer enabled for "+AllTime+" seconds", Toast.LENGTH_SHORT).show();
-		frequency = Core.getTickFrequency(); //frecuency of the clock. How many clocks cycles per second,
-		timer = Core.getTickCount();			//start timer for 1 minute. It gives number of clock cycles.
+		frequency = Core.getTickFrequency();
+		timer = Core.getTickCount();
 		TotalFrames = 0;
 		FrameFace = 0;
 		FrameEyesOpen = 0;
@@ -429,6 +398,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		flag = true;
 	}
 
+	//to check for timeout errro while detecting
 	public void SetTimer(){
 		long newtimer = Core.getTickCount()-timer;
 		if(newtimer/frequency>AllTime && flag){
@@ -466,69 +436,8 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		return flag_drowsy;
 	}
 
-	private boolean isBlurredImage(Bitmap image, Image img) {
 
-		RenderScript renderScript = RenderScript.create(this);
-		GrayScaling grayScaling = new GrayScaling(renderScript);
-		BitmapFactory.Options opt = new BitmapFactory.Options();
-		opt.inDither = true;
-		opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-		int l = CvType.CV_8UC1;
-		Mat matImage = new Mat();
-		Utils.bitmapToMat(image, matImage);
-		Mat matImageGrey = new Mat();
-		Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
-
-		Bitmap image1 = grayScaling.process(image);
-
-		Mat dst2 = new Mat();
-		Utils.bitmapToMat(image, dst2);
-
-		Mat laplacianImage = new Mat();
-		dst2.convertTo(laplacianImage, CvType.CV_8U);
-		Imgproc.Laplacian(matImageGrey, laplacianImage, CvType.CV_8U);
-		Mat laplacianImage8bit = new Mat();
-		laplacianImage.convertTo(laplacianImage8bit, CvType.CV_8U);
-
-
-		Bitmap bmp = Bitmap.createBitmap(laplacianImage8bit.cols(),
-				laplacianImage8bit.rows(), Bitmap.Config.ARGB_8888);
-
-		Utils.matToBitmap(laplacianImage8bit, bmp);
-		Log.d(TAG,"cols:"+bmp.getWidth());
-
-
-		int[] pixels = new int[bmp.getHeight() * bmp.getWidth()];
-		bmp.getPixels(pixels, 0, bmp.getWidth(), 0, 0, bmp.getWidth(),
-				bmp.getHeight());
-		if (bmp != null)
-			if (!bmp.isRecycled()) {
-				bmp.recycle();
-			}
-		int maxLap = -16777216;
-
-		for (int i = 0; i < pixels.length; i++) {
-			if (pixels[i] > maxLap) {
-				maxLap = pixels[i];
-			}
-		}
-
-		Log.i(TAG, " : " + maxLap );
-
-		int soglia = -4200000 ;//-6118750;
-		if (maxLap < soglia || maxLap == soglia) {
-			Log.i(TAG, maxLap + "--------->blur image<------------");
-			img.decrementCount();
-			return true;
-		} else {
-			Log.i(TAG, "----------->Not blur image<------------");
-			img.incrementCount();
-			return false;
-		}
-
-	}
-
+	//Async method for spinner. Processing works in background
 	private class AsyncCaller extends AsyncTask<Integer, Void, Void> {
         ProgressDialog pdLoading = new ProgressDialog(FdActivity.this);
         ImageView displayimage;
@@ -564,7 +473,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         is.close();
                         os.close();
 
-                        // ------------------ load right eye classificator -----------------------
+                        // load right eye classificator
                         InputStream iser = getResources().openRawResource(R.raw.haarcascade_righteye_2splits);
                         File cascadeDirER = getDir("cascadeER", Context.MODE_PRIVATE);
                         cascadeFileER = new File(cascadeDirER, "haarcascade_eye_right.xml");
@@ -578,7 +487,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         iser.close();
                         oser.close();
 
-                        // ------------------ load left eye classificator -----------------------
+                        // load left eye classificator
                         InputStream isel = getResources().openRawResource(R.raw.haarcascade_lefteye_2splits);
                         File cascadeDirEL = getDir("cascadeEL", Context.MODE_PRIVATE);
                         cascadeFileEL = new File(cascadeDirEL, "haarcascade_eye_left.xml");
@@ -592,7 +501,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         isel.close();
                         osel.close();
 
-                        // ------------------ load open eye classificator -----------------------
+                        // load open eye classificator
                         InputStream opisel = getResources().openRawResource(R.raw.haarcascade_eye_tree_eyeglasses);
                         File cascadeDirEyeOpen = getDir("cascadeEyeOpen", Context.MODE_PRIVATE);
                         cascadeFileEyeOpen = new File(cascadeDirEyeOpen, "haarcascade_eye_tree_eyeglasses.xml");
@@ -632,7 +541,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                             mJavaDetectorEyeLeft = null;
                         } else
                             Log.i(TAG, "Loaded cascade classifier from " + cascadeFileEL.getAbsolutePath());
-                        //cascadeDirEL.delete();
 
                         //EyeOpenClassifier
                         mJavaDetectorEyeOpen = new CascadeClassifier(cascadeFileEyeOpen.getAbsolutePath());
@@ -649,32 +557,35 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
                     }
 
-
+					//to store Image objects to compare result
                     ArrayList<Image> al = new ArrayList<Image>();
 
                     Bundle bundle = getIntent().getExtras();
-                    int numberOfCaptures = bundle.getInt("numberOfCaptures");
+                    //no. of photos taken
+					int numberOfCaptures = bundle.getInt("numberOfCaptures");
 
 					for (int i = 0; i < numberOfCaptures; i++) {
+						final DetectBlurred detectBlurred = new DetectBlurred();
+						//threading part:
 						ExecutorService threadPool = Executors.newFixedThreadPool(2);
 						final Image img = new Image(Singleton.getInstance().getArrayList().get(i));
                         Log.d(TAG, img.getName());
-                        myBitmap = getResizedBitmap(Singleton.getInstance().getArrayList().get(i).getImgBitmap(), 900);
+                        myBitmap = img.getResizedBitmap(Singleton.getInstance().getArrayList().get(i).getImgBitmap(), 900);
                         threadPool.submit(new Runnable() {
                             public void run() {
-                                isBlurredImage(myBitmap, img);
-                            }
+								//to detect blur. Accordingly counter in img object is set
+								detectBlurred.isBlurredImage(myBitmap, img, getApplicationContext()); }
                         });
                         threadPool.submit(new Runnable() {
                             public void run() {
+								//to detect face and eye state
                                 detectOpenClosed(myBitmap, img);
                             }
                         });
-                        //isBlurredImage(myBitmap, img);
-                        //detectOpenClosed(myBitmap, img);
                         al.add(img);
                         Log.d(TAG, al.get(i).getName());
                         Log.d(TAG, "Count" + al.get(i).getCount());
+						//sync
 						threadPool.shutdown();
 						try {
 							threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -683,8 +594,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 						}
                     }
 
-
-
+                    //compare parameters of images to detect the best according to count
                     displayimage = (ImageView) findViewById(R.id.imageView);
                     int count = -9999;
                     String myname = null;
@@ -703,7 +613,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                 }
                 break;
                 default: {
-                    //super.onManagerConnected(status);
                 }
                 break;
             }
@@ -712,6 +621,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
         @Override
         protected void onPostExecute(Void result) {
+			//display the best and save both images to external storage
             super.onPostExecute(result);
             final Bitmap finalimage = myBitmap;
             final Bitmap finalface = face;
@@ -739,26 +649,4 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 
         }
     }
-
-	void deleteRecursive(File fileOrDirectory) {
-		if (fileOrDirectory.isDirectory())
-			for (File child : fileOrDirectory.listFiles())
-				deleteRecursive(child);
-		fileOrDirectory.delete();
-	}
-
-	public Bitmap getResizedBitmap(Bitmap image, int maxSize) {
-		int width = image.getWidth();
-		int height = image.getHeight();
-
-		float bitmapRatio = (float)width / (float) height;
-		if (bitmapRatio > 1) {
-			width = maxSize;
-			height = (int) (width / bitmapRatio);
-		} else {
-			height = maxSize;
-			width = (int) (height * bitmapRatio);
-		}
-		return Bitmap.createScaledBitmap(image, width, height, true);
-	}
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 /**
  * Created by Akshay on 5/12/2017.
+ * Class for storing the images taken. Acts as global storage array
  */
 
 public class Singleton {
