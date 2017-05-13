@@ -131,6 +131,21 @@ public class CameraDemo extends Activity {
 		preview = new Preview(this);
 		((FrameLayout) findViewById(R.id.preview)).addView(preview);
 
+		/*Button changeCamera = (Button) findViewById(R.id.button3);
+
+		changeCamera.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				preview.camera.stopPreview();
+				//preview.camera.release();
+				*//*camera.stopPreview();
+				camera.release();*//*
+				preview = new Preview(getApplicationContext(),0);
+				((FrameLayout) findViewById(R.id.preview)).addView(preview);
+				//preview.camera.startPreview();
+			}
+		});*/
+
 		button1 = (RadioButton) findViewById(R.id.radioButton);
 		button5 = (RadioButton) findViewById(R.id.radioButton2);
 
@@ -183,12 +198,9 @@ public class CameraDemo extends Activity {
 				preview.camera.takePicture(shutterCallback, rawCallback,
 						jpegCallback);
 				buttonClick.setEnabled(false);
-
-
 			}
 		});
 	}
-
 
 		public  void OpenFDActivity(View view){
 			Intent myIntent = new Intent(CameraDemo.this,FdActivity.class);
@@ -198,7 +210,6 @@ public class CameraDemo extends Activity {
 			myIntent.putExtras(bundle);
 			startActivity(myIntent);
 		}
-
 
 	@Override
 	protected void onPause() {
@@ -263,5 +274,4 @@ public class CameraDemo extends Activity {
 			}
 		}
 	};
-
 }

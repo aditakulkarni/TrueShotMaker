@@ -151,7 +151,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		}
 
 		beep = MediaPlayer.create(this, R.raw.button1);
-
 	}
 
 	@Override
@@ -468,34 +467,41 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 	}
 
 	private boolean isBlurredImage(Bitmap image, Image img) {
-		RenderScript renderScript = RenderScript.create(this);
-		GrayScaling grayScaling = new GrayScaling(renderScript);
+
+		//RenderScript renderScript = RenderScript.create(this);
+		//GrayScaling grayScaling = new GrayScaling(renderScript);
 		BitmapFactory.Options opt = new BitmapFactory.Options();
 		opt.inDither = true;
 		opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
 		int l = CvType.CV_8UC1;
-		//Mat matImage = new Mat();
-		//Utils.bitmapToMat(image, matImage);
-		//Mat matImageGrey = new Mat();
-		//Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
-		Bitmap image1 = grayScaling.process(image);
+		Mat matImage = new Mat();
+		Utils.bitmapToMat(image, matImage);
 		Mat matImageGrey = new Mat();
-		Utils.bitmapToMat(image1, matImageGrey);
+		Imgproc.cvtColor(matImage, matImageGrey, Imgproc.COLOR_BGR2GRAY);
+
+		//Bitmap image1 = grayScaling.process(image);
+		//Mat matImageGrey = new Mat();
+		//Utils.bitmapToMat(image1, matImageGrey);
+		//Utils.matToBitmap(matImageGrey,image1);
+
 		Mat dst2 = new Mat();
-		Utils.bitmapToMat(image1, dst2);
+		Utils.bitmapToMat(image, dst2);
 
 		Mat laplacianImage = new Mat();
-		dst2.convertTo(laplacianImage, l);
+		dst2.convertTo(laplacianImage, CvType.CV_8U);
 		Imgproc.Laplacian(matImageGrey, laplacianImage, CvType.CV_8U);
 		Mat laplacianImage8bit = new Mat();
-		laplacianImage.convertTo(laplacianImage8bit, l);
-		System.gc();
+		laplacianImage.convertTo(laplacianImage8bit, CvType.CV_8U);
+		//System.gc();
+
 
 		Bitmap bmp = Bitmap.createBitmap(laplacianImage8bit.cols(),
 				laplacianImage8bit.rows(), Bitmap.Config.ARGB_8888);
 
 		Utils.matToBitmap(laplacianImage8bit, bmp);
+		Log.d(TAG,"cols:"+bmp.getWidth());
+
 
 		int[] pixels = new int[bmp.getHeight() * bmp.getWidth()];
 		bmp.getPixels(pixels, 0, bmp.getWidth(), 0, 0, bmp.getWidth(),
@@ -507,13 +513,14 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
 		int maxLap = -16777216;
 
 		for (int i = 0; i < pixels.length; i++) {
-			//Log.i(TAG, i + " : " + pixels[i] );
 			if (pixels[i] > maxLap) {
 				maxLap = pixels[i];
 			}
 		}
 
-		int soglia = -12507499 ;//-6118750;
+		Log.i(TAG, " : " + maxLap );
+
+		int soglia = -4200000 ;//-6118750;
 		if (maxLap < soglia || maxLap == soglia) {
 			Log.i(TAG, maxLap + "--------->blur image<------------");
 			img.decrementCount();
@@ -544,7 +551,7 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    for(int i=0;i<10;i++) {
+                    for(int i=0;i<1;i++) {
                         Log.d(TAG,Singleton.getInstance().getArrayList().get(i).getName());
                     }
                     try {
@@ -657,14 +664,12 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                     Bundle bundle = getIntent().getExtras();
                     int numberOfCaptures = bundle.getInt("numberOfCaptures");
 
-                   // ExecutorService threadPool = Executors.newFixedThreadPool(2);
-                    for (int i = 0; i < numberOfCaptures; i++) {
-                        Image img = new Image();
-                        Log.d(TAG,"no:"+img.getCount());
-                        img = Singleton.getInstance().getArrayList().get(i);
+					for (int i = 0; i < numberOfCaptures; i++) {
+						ExecutorService threadPool = Executors.newFixedThreadPool(2);
+						final Image img = new Image(Singleton.getInstance().getArrayList().get(i));
                         Log.d(TAG, img.getName());
-                        myBitmap = getResizedBitmap(Singleton.getInstance().getArrayList().get(i).getImgBitmap(), 225);
-                      /*  threadPool.submit(new Runnable() {
+                        myBitmap = getResizedBitmap(Singleton.getInstance().getArrayList().get(i).getImgBitmap(), 900);
+                        threadPool.submit(new Runnable() {
                             public void run() {
                                 isBlurredImage(myBitmap, img);
                             }
@@ -674,20 +679,20 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                                 detectOpenClosed(myBitmap, img);
                             }
                         });
-*/
-                        isBlurredImage(myBitmap, img);
-                        detectOpenClosed(myBitmap, img);
+                        //isBlurredImage(myBitmap, img);
+                        //detectOpenClosed(myBitmap, img);
                         al.add(img);
                         Log.d(TAG, al.get(i).getName());
                         Log.d(TAG, "Count" + al.get(i).getCount());
+						threadPool.shutdown();
+						try {
+							threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
                     }
 
-                   /* threadPool.shutdown();
-                    try {
-                        threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }*/
+
 
                     displayimage = (ImageView) findViewById(R.id.imageView);
                     int count = -9999;
@@ -740,7 +745,6 @@ public class FdActivity extends Activity {//implements CvCameraViewListener2 {
                         e.printStackTrace();
                     }
                 }
-
             });*/
 
         }
